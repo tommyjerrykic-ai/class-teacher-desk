@@ -106,7 +106,7 @@ function AuthScreen({config,onConfig,onSession,onDemo}:{config:CloudConfig|null;
     if(!config)throw new Error('請先設定雲端連線');const email=String(form.get('email')),password=String(form.get('password'));
     if(mode==='login')onSession(await signIn(config,email,password));
     if(mode==='signup'){await signUp(config,email,password);setMsg('帳號已建立。若專案要求 Email 驗證，請先到信箱確認。');setMode('login');}
-    if(mode==='reset'){await resetPassword(config,email,location.origin);setMsg('密碼重設信已寄出，請查看信箱。');}
+    if(mode==='reset'){await resetPassword(config,email,`${location.origin}${process.env.NEXT_PUBLIC_BASE_PATH||''}`);setMsg('密碼重設信已寄出，請查看信箱。');}
   }catch(err){setMsg((err as Error).message);}finally{setBusy(false);}}
   return <main className="authPage"><section className="authIntro"><div className="brand authBrand"><span className="brandMark">班</span><span>班主任工作台</span></div><div><span className="eyebrow">每天，從掌握全班開始</span><h1>課表、出勤、待辦<br/>與學生追蹤，一處完成。</h1><p>為班主任整理每天真正需要處理的資訊，讓平板與電腦保持一致。</p></div><div className="authFeature"><b>今日重點</b><span>快速點名、即將到期的任務、需要回訪的學生。</span></div></section>
     <section className="authFormWrap"><form className="authCard" onSubmit={submit}>
