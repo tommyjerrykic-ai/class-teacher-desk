@@ -77,8 +77,9 @@ export function sessionFromHash():Session|null {
 
 export async function loadCloud(config:CloudConfig,session:Session):Promise<AppData> {
   const entries=await Promise.all(tableNames.map(async table=>{
-    const order=table==='students'?'student_no.asc':table==='schedule'?'weekday.asc,period.asc':table==='tasks'?'due_at.asc':table==='student_records'?'record_date.desc':'date.desc';
-    const r=await fetch(`${config.url}/rest/v1/${table}?select=*&order=${order}`,{headers:authHeaders(config,session.access_token,false)}); return [table,await parseResponse(r)];
+    const order=table==='students'?'student_no.asc':table==='schedule'?'weekday.asc,period.asc':table==='tasks'?'due_at.asc':table==='student_records'?'record_date.desc':table==='attendance'?'date.desc':'';
+    const query=`select=*${order?`&order=${order}`:''}`;
+    const r=await fetch(`${config.url}/rest/v1/${table}?${query}`,{headers:authHeaders(config,session.access_token,false)}); return [table,await parseResponse(r)];
   }));
   return Object.fromEntries(entries) as AppData;
 }
