@@ -4,12 +4,13 @@ export type Task = { id:string; user_id:string; title:string; due_at:string; pri
 export type Schedule = { id:string; user_id:string; weekday:number; period:number; start_time:string; subject:string; location:string };
 export type StudentRecord = { id:string; user_id:string; student_id:string; record_date:string; record_type:string; content:string; follow_up_date:string|null; created_at?:string };
 export type ClassSettings = { id:string; user_id:string; class_name:string; school_year:string; semester:string; teacher_name:string };
-export type AppData = { students:Student[]; attendance:Attendance[]; tasks:Task[]; schedule:Schedule[]; student_records:StudentRecord[]; class_settings:ClassSettings[] };
+export type SeatingPlan = { id:string; user_id:string; plan_date:string; layout:(string|null)[]; created_at?:string };
+export type AppData = { students:Student[]; attendance:Attendance[]; tasks:Task[]; schedule:Schedule[]; student_records:StudentRecord[]; class_settings:ClassSettings[]; seating_plans:SeatingPlan[] };
 export type Session = { access_token:string; refresh_token:string; expires_at?:number; user:{ id:string; email:string } };
 export type CloudConfig = { url:string; key:string };
 
-export const emptyData:AppData = { students:[], attendance:[], tasks:[], schedule:[], student_records:[], class_settings:[] };
-export const tableNames = ['students','attendance','tasks','schedule','student_records','class_settings'] as const;
+export const emptyData:AppData = { students:[], attendance:[], tasks:[], schedule:[], student_records:[], class_settings:[], seating_plans:[] };
+export const tableNames = ['students','attendance','tasks','schedule','student_records','class_settings','seating_plans'] as const;
 const uid = () => crypto.randomUUID();
 const isoDate = (offset=0) => { const d=new Date(); d.setDate(d.getDate()+offset); return d.toISOString().slice(0,10); };
 
@@ -34,7 +35,8 @@ export function demoData():AppData {
     student_records:[
       {id:uid(),user_id:user,student_id:byNo(8),record_date:isoDate(-5),record_type:'學習狀況',content:'近期作業完成度下降，已約定本週再次了解。',follow_up_date:isoDate()},
       {id:uid(),user_id:user,student_id:byNo(21),record_date:isoDate(-2),record_type:'家長聯絡',content:'已和家長討論到校狀況，明日回訪。',follow_up_date:isoDate(1)}],
-    class_settings:[{id:uid(),user_id:user,class_name:'七年三班',school_year:'115 學年度',semester:'第一學期',teacher_name:'林老師'}]
+    class_settings:[{id:uid(),user_id:user,class_name:'七年三班',school_year:'115 學年度',semester:'第一學期',teacher_name:'林老師'}],
+    seating_plans:[]
   };
 }
 
@@ -77,7 +79,7 @@ export function sessionFromHash():Session|null {
 
 export async function loadCloud(config:CloudConfig,session:Session):Promise<AppData> {
   const entries=await Promise.all(tableNames.map(async table=>{
-    const order=table==='students'?'student_no.asc':table==='schedule'?'weekday.asc,period.asc':table==='tasks'?'due_at.asc':table==='student_records'?'record_date.desc':table==='attendance'?'date.desc':'';
+    const order=table==='students'?'student_no.asc':table==='schedule'?'weekday.asc,period.asc':table==='tasks'?'due_at.asc':table==='student_records'?'record_date.desc':table==='attendance'?'date.desc':table==='seating_plans'?'created_at.desc':'';
     const query=`select=*${order?`&order=${order}`:''}`;
     const r=await fetch(`${config.url}/rest/v1/${table}?${query}`,{headers:authHeaders(config,session.access_token,false)}); return [table,await parseResponse(r)];
   }));
@@ -92,6 +94,11 @@ export async function cloudUpdate<T>(config:CloudConfig,session:Session,table:st
 }
 export async function cloudDelete(config:CloudConfig,session:Session,table:string,id:string) {
   const r=await fetch(`${config.url}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:authHeaders(config,session.access_token,false)}); await parseResponse(r);
+}
+export async function cloudReplaceRows<T>(config:CloudConfig,session:Session,table:string,rows:T[]):Promise<T[]> {
+  const clear=await fetch(`${config.url}/rest/v1/${table}?user_id=eq.${session.user.id}`,{method:'DELETE',headers:authHeaders(config,session.access_token,false)}); await parseResponse(clear);
+  if(!rows.length)return [];
+  const r=await fetch(`${config.url}/rest/v1/${table}`,{method:'POST',headers:{...authHeaders(config,session.access_token),Prefer:'return=representation'},body:JSON.stringify(rows)}); return parseResponse(r);
 }
 export async function cloudReplace(config:CloudConfig,session:Session,data:AppData) {
   for(const table of [...tableNames].reverse()) { const r=await fetch(`${config.url}/rest/v1/${table}?user_id=eq.${session.user.id}`,{method:'DELETE',headers:authHeaders(config,session.access_token,false)}); await parseResponse(r); }

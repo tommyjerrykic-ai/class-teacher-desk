@@ -91,3 +91,65 @@ label { display:grid; gap:7px; color:#53615b; font-size:12px; font-weight:700; }
 @media (max-width:1050px){.weekGrid{grid-template-columns:repeat(5,180px)}.settingsGrid{grid-template-columns:1fr}.settingsCard:first-child{grid-row:auto}.authPage{grid-template-columns:1fr 1fr}.authIntro{padding:45px}.authIntro h1{font-size:42px}}
 @media (max-width:900px){.demoBanner{padding:9px 22px}.sectionTitle{align-items:flex-start}.studentGrid{grid-template-columns:1fr}.tableHead,.attendanceRow{grid-template-columns:55px 100px 1fr}.authPage{grid-template-columns:1fr}.authIntro{min-height:320px;padding:32px}.authIntro h1{font-size:35px}.authIntro .authFeature{display:none}.authFormWrap{padding:25px}.mobileNav button span{display:block;margin-bottom:3px;font-size:10px}.toast{bottom:82px}}
 @media (max-width:650px){.sectionTitle{display:grid}.sectionActions{width:100%}.sectionActions input{min-width:0}.sectionActions>*{flex:1}.tableHead{display:none}.attendanceRow{grid-template-columns:42px 1fr;padding:13px}.attendanceRow .statusPicker{grid-column:1/-1}.recordCard{grid-template-columns:75px 1fr}.recordCard .rowActions{grid-column:2}.settingsGrid{grid-template-columns:1fr}.formGrid{grid-template-columns:1fr}.formGrid .wide{grid-column:auto}.buttonStack{grid-template-columns:1fr}.taskData{grid-template-columns:30px 1fr}.taskData .rowActions{grid-column:2}.authIntro{min-height:270px}.authIntro h1{font-size:30px}.authIntro p{font-size:12px}.authFormWrap{padding:15px}.authCard{padding:25px;border-radius:17px}.modalBack{padding:10px}.modal{padding:20px}.toast{left:14px;right:14px;text-align:center}}
+
+/* Attendance details, compact roster, seating plan and schedule editor */
+.sectionActions>button:not(.primaryButton) { border:1px solid var(--line);border-radius:10px;background:white;color:#58675f;padding:10px 14px;cursor:pointer;white-space:nowrap }
+.attendanceStudent { min-width:0;display:grid;gap:4px }
+.attendanceStudent>strong { font-size:14px }
+.attendanceStudent>small { overflow:hidden;color:#936223;font-size:10px;text-overflow:ellipsis;white-space:nowrap }
+.recordsTools { display:flex;align-items:center;gap:8px }
+.recordsTools select { min-width:165px }
+
+.studentGrid { grid-template-columns:repeat(3,minmax(0,1fr));gap:8px }
+.studentCard { grid-template-columns:38px minmax(0,1fr) auto;gap:9px;padding:10px 11px;border-radius:12px }
+.studentCard .studentAvatar { width:34px;height:34px;border-radius:10px;font-size:10px }
+.studentCard h3 { margin:0 0 2px;font-size:13px }
+.studentCard p { font-size:10px;line-height:1.35 }
+.studentCardMain .tags { margin-top:5px;gap:4px }
+.studentCardMain .tags span { padding:3px 6px;font-size:8px }
+.studentCard>button { padding:5px }
+
+.savedStamp { margin:0;color:var(--muted);font-size:11px }
+.teacherDesk { width:min(280px,48%);margin:0 auto;padding:10px;border-radius:9px;background:#183d31;color:white;text-align:center;font-size:12px;font-weight:800;letter-spacing:.08em }
+.seatingGridWrap { overflow:auto;padding:3px 2px 9px }
+.seatingGrid { min-width:700px;display:grid;grid-template-columns:repeat(6,minmax(94px,1fr));gap:9px }
+.seat { position:relative;min-height:76px;display:grid;place-items:center;align-content:center;gap:3px;border:1px solid #dfe5df;border-radius:12px;background:white;color:var(--ink);cursor:pointer }
+.seat small { position:absolute;left:7px;top:6px;color:#a1aaa5;font-size:8px }
+.seat b { font:17px Georgia,serif }
+.seat span { max-width:90%;overflow:hidden;font-size:11px;text-overflow:ellipsis;white-space:nowrap }
+.seat.occupied { cursor:grab;box-shadow:0 3px 10px rgba(30,56,45,.04) }
+.seat.occupied:active { cursor:grabbing }
+.seat.emptySeat { background:#f1f3ef;color:#a5ada8;border-style:dashed }
+.seat.picked { outline:3px solid rgba(233,111,81,.32);border-color:var(--coral);background:#fff8f5 }
+
+.scheduleTableWrap { overflow:auto;border:1px solid var(--line);border-radius:15px;background:white }
+.scheduleTable { width:100%;min-width:1250px;border-collapse:separate;border-spacing:0;table-layout:fixed }
+.scheduleTable th,.scheduleTable td { border-right:1px solid #e8ece8;border-bottom:1px solid #e8ece8;padding:0;text-align:center }
+.scheduleTable tr:last-child td { border-bottom:0 }
+.scheduleTable th:last-child,.scheduleTable td:last-child { border-right:0 }
+.scheduleTable thead th { height:48px;background:#f5f7f4;color:#65716b;font-size:11px }
+.scheduleTable thead th:first-child,.scheduleTable tbody th { position:sticky;left:0;z-index:2;width:86px;background:#eef2ed;color:#3e5e50 }
+.scheduleTable thead th:first-child { z-index:3 }
+.scheduleTable td { min-width:115px;background:white }
+.scheduleTable input { height:58px;border:0;border-radius:0;background:transparent;text-align:center;font-weight:700 }
+.scheduleTable input:focus { position:relative;z-index:1;background:#fffdf6;outline:3px solid rgba(75,128,103,.22);outline-offset:-3px }
+
+@media (max-width:1150px) { .studentGrid { grid-template-columns:repeat(2,minmax(0,1fr)) } }
+@media (max-width:900px) {
+  .mobileNav { grid-template-columns:repeat(8,minmax(72px,1fr));overflow-x:auto;overflow-y:hidden }
+  .mobileNav button { min-width:72px }
+  .studentGrid { grid-template-columns:repeat(2,minmax(0,1fr)) }
+}
+@media (max-width:650px) {
+  .studentGrid { grid-template-columns:1fr }
+  .recordsTools { width:100%;display:grid;grid-template-columns:1fr 1fr }
+  .recordsTools input { grid-column:1/-1 }
+  .seatingGrid { min-width:650px;gap:7px }
+  .seat { min-height:70px }
+}
+@media (max-width:620px) {
+  .primaryButton { width:auto;height:auto;overflow:visible;padding:10px 14px;font-size:12px;white-space:normal }
+  .primaryButton::first-letter { font-size:inherit }
+  .topActions .primaryButton { width:42px;height:42px;overflow:hidden;padding:0 12px;font-size:0;white-space:nowrap }
+  .topActions .primaryButton::first-letter { font-size:20px }
+}
