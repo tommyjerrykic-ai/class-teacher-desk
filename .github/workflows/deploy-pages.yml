@@ -31,7 +31,7 @@ jobs:
         env:
           GITHUB_PAGES: 'true'
           NEXT_PUBLIC_BASE_PATH: /class-teacher-desk
-          SITE_URL: https://tommyjerrykic.github.io/class-teacher-desk/
+          SITE_URL: https://tommyjerrykic-ai.github.io/class-teacher-desk/
         run: pnpm exec next build
       - uses: actions/upload-pages-artifact@v3
         with:
