@@ -13,6 +13,10 @@ const labels:Record<Page,string>={dashboard:'今日總覽',attendance:'出缺勤
 const icons:Record<Page,string>={dashboard:'今',attendance:'勤',tasks:'辦',students:'生',records:'記',schedule:'課',settings:'設'};
 const statusLabels:Record<Attendance['status'],string>={present:'出席',late:'遲到',personal:'事假',sick:'病假',absent:'缺席'};
 const weekdays=['一','二','三','四','五','六','日'];
+const defaultCloudConfig:CloudConfig={
+  url:'https://hkqugzmqwlfbxqjaomlh.supabase.co',
+  key:'sb_publishable_TRyhbnUEJhWlyiCjOoqtrQ_ZZ7o7UDg',
+};
 const today=()=>new Date().toISOString().slice(0,10);
 const formatDate=(value:string)=>value?new Intl.DateTimeFormat('zh-TW',{month:'numeric',day:'numeric'}).format(new Date(value)):'—';
 const formatDateTime=(value:string)=>value?new Intl.DateTimeFormat('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(value)):'—';
@@ -27,7 +31,7 @@ export default function Home(){
 
   useEffect(()=>{
     const envUrl=process.env.NEXT_PUBLIC_SUPABASE_URL||'',envKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY||'';
-    const saved=localStorage.getItem('teacher-desk-cloud'); const cfg=envUrl&&envKey?{url:envUrl,key:envKey}:saved?JSON.parse(saved):null;
+    const saved=localStorage.getItem('teacher-desk-cloud'); const cfg=envUrl&&envKey?{url:envUrl,key:envKey}:saved?JSON.parse(saved):defaultCloudConfig;
     const recovered=sessionFromHash(); const stored=localStorage.getItem('teacher-desk-session'); const sess=recovered||(stored?JSON.parse(stored):null);
     setConfig(cfg); setSession(sess); if(recovered) localStorage.setItem('teacher-desk-session',JSON.stringify(recovered)); setReady(true);
   },[]);
