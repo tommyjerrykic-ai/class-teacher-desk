@@ -44,6 +44,25 @@ alter table public.schedule enable row level security;
 alter table public.student_records enable row level security;
 alter table public.class_settings enable row level security;
 
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on table
+  public.students,
+  public.attendance,
+  public.tasks,
+  public.schedule,
+  public.student_records,
+  public.class_settings
+to authenticated;
+
+revoke all on table
+  public.students,
+  public.attendance,
+  public.tasks,
+  public.schedule,
+  public.student_records,
+  public.class_settings
+from anon;
+
 do $$ declare t text; begin
   foreach t in array array['students','attendance','tasks','schedule','student_records','class_settings'] loop
     execute format('drop policy if exists owner_select on public.%I',t); execute format('create policy owner_select on public.%I for select to authenticated using ((select auth.uid()) = user_id)',t);
