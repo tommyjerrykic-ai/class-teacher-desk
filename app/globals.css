@@ -35,25 +35,28 @@ button { font:inherit; }
 .lessonList { padding-top:7px; }.lesson { position:relative; display:grid; grid-template-columns:52px 13px 1fr auto; align-items:center; gap:12px; min-height:61px; }.lesson time { font-size:12px; color:#7c8681; }.lessonIndex { width:9px; height:9px; border-radius:50%; background:#cdd5d0; box-shadow:0 0 0 4px white; z-index:1; }.lesson:after { content:''; position:absolute; left:69px; top:0; bottom:0; width:1px; background:#e1e6e2; }.lesson.active .lessonIndex { background:var(--coral); }.lesson div { display:grid; gap:4px; }.lesson small { color:#89928d; }.lesson em { font-style:normal; font-size:10px; padding:5px 8px; border-radius:99px; background:#f7ddd4; color:#9d4836; }
 .task { display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:12px; align-items:center; padding:15px 0; border-bottom:1px solid #edf0ec; }.task:last-child { border-bottom:0; }.check { width:18px; height:18px; border:1.5px solid #aeb8b3; border-radius:6px; }.task div { min-width:0;display:grid; gap:5px; }.task strong { font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere; }.task small { color:#8a938f; font-size:11px; }.task b { font-size:10px; color:#69756f; background:#f1f3f0; border-radius:99px; padding:5px 8px; }.task.urgent b { color:#a84835; background:#f9e1d9; }
 .followPanel { display:grid; grid-template-columns:1fr 1fr; gap:0 22px; }.followPanel .panelHead { grid-column:1/-1; }.studentRow { display:grid; grid-template-columns:42px 1fr 24px; gap:12px; align-items:center; padding:16px 4px 3px; }.studentAvatar { width:38px; height:38px; display:grid; place-items:center; border-radius:13px; font-size:12px; font-weight:800; }.lavender { background:#e5dff2; color:#625478; }.mint { background:#d9ece3; color:#486c5c; }.studentRow div { display:grid; gap:5px; }.studentRow strong { font-size:13px; }.studentRow small { font-size:11px; color:#89928d; }.arrow { color:#84918a; }
-.homeworkPanel { margin-top:17px;display:grid;gap:15px;padding:22px;border:1px solid var(--line);border-radius:17px;background:white }
+.homeworkPanel { display:grid;gap:15px;padding:22px;border:1px solid var(--line);border-radius:17px;background:white }
 .homeworkHead { display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding-bottom:16px;border-bottom:1px solid #edf0ec }
 .homeworkHead h2 { margin:4px 0 5px;font:23px Georgia,'Noto Serif TC',serif }
 .homeworkHead p { margin:0;color:var(--muted);font-size:12px }
-.subjectAdder { display:flex;gap:7px;min-width:min(310px,100%) }
+.homeworkTools { display:flex;align-items:flex-end;gap:8px }
+.homeworkTools label { min-width:155px }
+.homeworkTools>button { height:40px;white-space:nowrap;border:1px solid var(--line);border-radius:10px;background:#f8f9f7;color:#53615a;padding:0 14px;cursor:pointer }
+.subjectAdder { display:flex;gap:7px;width:min(420px,100%);justify-self:end }
 .subjectAdder input { min-width:0 }
 .subjectAdder button { flex:none;border:1px solid var(--ink);border-radius:10px;background:var(--ink);color:white;padding:10px 13px;font-size:12px;font-weight:800;cursor:pointer }
 .subjectAdder button:disabled { opacity:.45;cursor:not-allowed }
-.studentTray { display:flex;gap:7px;overflow-x:auto;padding:2px 2px 7px }
-.studentTray button { flex:none;display:flex;align-items:center;gap:6px;border:1px solid #dfe5df;border-radius:99px;background:#f8faf7;color:#526159;padding:7px 10px;cursor:grab;font-size:11px }
-.studentTray button:active { cursor:grabbing }.studentTray button.selected { border-color:#d36a4e;background:#fff1eb;color:#863f2e;box-shadow:0 0 0 2px rgba(233,111,81,.14) }
-.studentTray b { color:#264d3e;font:12px Georgia,serif }
 .homeworkSubjects { display:grid;gap:8px }
-.homeworkSubject { display:grid;grid-template-columns:minmax(130px,.32fr) minmax(0,1fr);min-height:64px;border:1px solid #e3e8e3;border-radius:13px;background:#fbfcfa;overflow:hidden }
+.homeworkSubject { display:grid;grid-template-columns:minmax(125px,.22fr) minmax(230px,.36fr) minmax(250px,1fr);min-height:68px;border:1px solid #e3e8e3;border-radius:13px;background:#fbfcfa;overflow:hidden }
 .homeworkSubject:has(.emptyOwing) { border-style:dashed }.homeworkSubject:hover { border-color:#b9cabe }
 .subjectName { display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;padding:13px 15px;background:#eef3ed }
 .subjectName strong { font-size:14px;overflow-wrap:anywhere }.subjectName span { color:#7c8982;font-size:10px;white-space:nowrap }
 .subjectName>button { width:25px;height:25px;border:0;border-radius:50%;background:transparent;color:#9aa49f;cursor:pointer }
 .subjectName>button:hover { background:#f4ddd7;color:#a54835 }
+.subjectAssign { display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:7px;padding:11px;border-right:1px solid #e3e8e3 }
+.subjectAssign select { min-width:0 }
+.subjectAssign button { height:38px;border:1px solid var(--ink);border-radius:9px;background:var(--ink);color:white;padding:0 13px;font-size:11px;font-weight:800;cursor:pointer }
+.subjectAssign button:disabled { opacity:.4;cursor:not-allowed }
 .owingStudents { min-width:0;display:flex;align-items:center;align-content:center;flex-wrap:wrap;gap:7px;padding:10px 13px }
 .owingStudents>span { display:flex;align-items:center;gap:5px;max-width:100%;border-radius:99px;background:#f7ded5;color:#7c3e30;padding:6px 7px 6px 9px;font-size:11px }
 .owingStudents>span b { font:11px Georgia,serif }.owingStudents>span>button { width:20px;height:20px;border:0;border-radius:50%;background:rgba(255,255,255,.65);color:#9c5543;cursor:pointer }
@@ -114,7 +117,8 @@ label { display:grid; gap:7px; color:#53615b; font-size:12px; font-weight:700; }
 @media (max-width:1050px){.weekGrid{grid-template-columns:repeat(5,180px)}.settingsGrid{grid-template-columns:1fr}.settingsCard:first-child{grid-row:auto}.authPage{grid-template-columns:1fr 1fr}.authIntro{padding:45px}.authIntro h1{font-size:42px}}
 @media (max-width:900px){.demoBanner{padding:9px 22px}.sectionTitle{align-items:flex-start}.studentGrid{grid-template-columns:1fr}.tableHead,.attendanceRow{grid-template-columns:55px 100px 1fr}.authPage{grid-template-columns:1fr}.authIntro{min-height:320px;padding:32px}.authIntro h1{font-size:35px}.authIntro .authFeature{display:none}.authFormWrap{padding:25px}.mobileNav button span{display:block;margin-bottom:3px;font-size:10px}.toast{bottom:82px}}
 @media (max-width:650px){.sectionTitle{display:grid}.sectionActions{width:100%}.sectionActions input{min-width:0}.sectionActions>*{flex:1}.tableHead{display:none}.attendanceRow{grid-template-columns:42px 1fr;padding:13px}.attendanceRow .statusPicker{grid-column:1/-1}.recordCard{grid-template-columns:75px 1fr}.recordCard .rowActions{grid-column:2}.settingsGrid{grid-template-columns:1fr}.formGrid{grid-template-columns:1fr}.formGrid .wide{grid-column:auto}.buttonStack{grid-template-columns:1fr}.taskData{grid-template-columns:30px 1fr}.taskData .rowActions{grid-column:2}.authIntro{min-height:270px}.authIntro h1{font-size:30px}.authIntro p{font-size:12px}.authFormWrap{padding:15px}.authCard{padding:25px;border-radius:17px}.modalBack{padding:10px}.modal{padding:20px}.toast{left:14px;right:14px;text-align:center}}
-@media (max-width:650px){.homeworkHead{display:grid;align-items:start}.subjectAdder{min-width:0;width:100%}.homeworkSubject{grid-template-columns:105px minmax(0,1fr)}.subjectName{grid-template-columns:1fr auto;padding:10px}.subjectName span{display:none}.homeworkPanel{padding:16px}.owingStudents{padding:8px}}
+@media (max-width:800px){.homeworkHead{display:grid;align-items:start}.homeworkTools{width:100%;flex-wrap:wrap}.homeworkTools label{flex:1}.subjectAdder{width:100%}.homeworkSubject{grid-template-columns:110px minmax(210px,.8fr) minmax(220px,1fr);overflow-x:auto}.subjectName{grid-template-columns:1fr auto;padding:10px}.subjectName span{display:none}.homeworkPanel{padding:16px}.owingStudents{padding:8px}}
+@media (max-width:560px){.homeworkTools>*{width:100%}.homeworkSubject{grid-template-columns:1fr}.subjectName{grid-template-columns:1fr auto auto}.subjectName span{display:block}.subjectAssign{border-right:0;border-bottom:1px solid #e3e8e3}}
 
 /* Attendance details, compact roster, seating plan and schedule editor */
 .sectionActions>button:not(.primaryButton) { border:1px solid var(--line);border-radius:10px;background:white;color:#58675f;padding:10px 14px;cursor:pointer;white-space:nowrap }
