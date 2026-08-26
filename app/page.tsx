@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AppData, Attendance, ClassSettings, CloudConfig, Schedule, SeatingPlan, Session, Student, StudentRecord, Task,
+  AppData, Attendance, ClassSettings, CloudConfig, HomeworkRecord, HomeworkSubject, Schedule, SeatingPlan, Session, Student, StudentRecord, Task,
   cloudDelete, cloudInsert, cloudReplace, cloudReplaceRows, cloudUpdate, emptyData, loadCloud, loadLocal, resetPassword,
   saveLocal, sessionFromHash, signIn, signUp, tableNames, updatePassword,
 } from './data';
@@ -65,6 +65,14 @@ export default function Home(){
   async function saveSchedule(rows:Schedule[]){
     setBusy(true);try{const user_id=session?.user.id||'demo-user';const prepared=rows.map(r=>({...r,id:r.id||crypto.randomUUID(),user_id}));const saved=demo?prepared:await cloudReplaceRows(config!,session!,'schedule',prepared);commit({...data,schedule:saved});setToast('課表已同步保存');}catch(e){setToast((e as Error).message);}finally{setBusy(false);}
   }
+  async function addHomeworkRecord(subjectId:string,studentId:string){
+    if(data.homework_records.some(r=>r.date===today()&&r.subject_id===subjectId&&r.student_id===studentId)){setToast('這位學生已在該科目的欠功課名單');return;}
+    await mutate('homework_records',{subject_id:subjectId,student_id:studentId,date:today()});
+  }
+  async function removeHomeworkSubject(subject:HomeworkSubject){
+    if(!confirm(`確定刪除「${subject.name}」嗎？該科目的欠功課紀錄也會一併刪除。`))return;
+    setBusy(true);try{if(!demo){const related=data.homework_records.filter(r=>r.subject_id===subject.id);await Promise.all(related.map(r=>cloudDelete(config!,session!,'homework_records',r.id)));await cloudDelete(config!,session!,'homework_subjects',subject.id);}setData(prev=>{const next={...prev,homework_subjects:prev.homework_subjects.filter(s=>s.id!==subject.id),homework_records:prev.homework_records.filter(r=>r.subject_id!==subject.id)};if(demo)saveLocal(next);return next;});setToast('科目已刪除');}catch(e){setToast((e as Error).message);}finally{setBusy(false);}
+  }
   function logout(){localStorage.removeItem('teacher-desk-session');setSession(null);setData(emptyData);setDemo(false);}
   function startDemo(){setDemo(true);setSession(null);setData(loadLocal());}
 
@@ -82,7 +90,7 @@ export default function Home(){
       <header className="topbar"><div><p>{new Intl.DateTimeFormat('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date())}</p><h1>{page==='dashboard'?`早安，${settings.teacher_name}`:labels[page]}</h1></div><div className="topActions"><span className={`syncDot ${demo?'demo':''}`}>{busy?'同步中…':demo?'示範模式':'已同步'}</span><button className="ghostButton" onClick={()=>setPage('settings')}>設定</button><button className="primaryButton" onClick={()=>setEdit({table:'tasks',row:{}})}>＋ 快速新增</button></div></header>
       {demo&&<div className="demoBanner"><strong>示範模式</strong>　資料只保存在這台裝置。設定 Supabase 後即可跨裝置同步。<button onClick={()=>{setDemo(false);setData(emptyData);}}>設定雲端</button></div>}
       <div className="content">
-        {page==='dashboard'&&<Dashboard settings={settings} students={students} schedule={todaySchedule} counts={counts} tasks={openTasks} records={followUps} studentName={studentName} onPage={setPage} onEdit={setEdit}/>} 
+        {page==='dashboard'&&<Dashboard settings={settings} students={students} schedule={todaySchedule} counts={counts} tasks={openTasks} records={followUps} homeworkSubjects={data.homework_subjects} homeworkRecords={data.homework_records.filter(r=>r.date===today())} studentName={studentName} onPage={setPage} onEdit={setEdit} addHomeworkRecord={addHomeworkRecord} removeHomeworkRecord={id=>remove('homework_records',id)} addHomeworkSubject={name=>mutate('homework_subjects',{name,sort_order:(Math.max(0,...data.homework_subjects.map(s=>s.sort_order))+1)})} removeHomeworkSubject={removeHomeworkSubject}/>}
         {page==='attendance'&&<AttendancePage students={students} records={data.attendance} date={attendanceDate} setDate={setAttendanceDate} update={updateAttendance} markAll={()=>Promise.all(students.map(s=>updateAttendance(s,'present','')))} exportCsv={()=>exportAttendance(data,attendanceDate)} exportAll={()=>exportAllAttendance(data)}/>}
         {page==='tasks'&&<TasksPage {...pageProps} tasks={data.tasks} toggle={t=>mutate('tasks',t,{completed:!t.completed})}/>} 
         {page==='students'&&<StudentsPage {...pageProps}/>} 
@@ -119,13 +127,26 @@ function AuthScreen({config,onConfig,onSession,onDemo}:{config:CloudConfig|null;
   </main>;
 }
 
-function Dashboard({settings,students,schedule,counts,tasks,records,studentName,onPage,onEdit}:{settings:ClassSettings;students:Student[];schedule:Schedule[];counts:Record<string,number>;tasks:Task[];records:StudentRecord[];studentName:(id:string|null)=>string;onPage:(p:Page)=>void;onEdit:(e:EditState)=>void}){
+function Dashboard({settings,students,schedule,counts,tasks,records,homeworkSubjects,homeworkRecords,studentName,onPage,onEdit,addHomeworkRecord,removeHomeworkRecord,addHomeworkSubject,removeHomeworkSubject}:{settings:ClassSettings;students:Student[];schedule:Schedule[];counts:Record<string,number>;tasks:Task[];records:StudentRecord[];homeworkSubjects:HomeworkSubject[];homeworkRecords:HomeworkRecord[];studentName:(id:string|null)=>string;onPage:(p:Page)=>void;onEdit:(e:EditState)=>void;addHomeworkRecord:(subjectId:string,studentId:string)=>Promise<void>;removeHomeworkRecord:(id:string)=>void;addHomeworkSubject:(name:string)=>Promise<void>;removeHomeworkSubject:(subject:HomeworkSubject)=>Promise<void>}){
   const attended=counts.present+counts.late,excused=counts.personal+counts.sick;
   return <><section className="heroCard"><div><span className="eyebrow">今日班級狀況</span><h2>{settings.class_name}</h2><p>{schedule.length?`第一節 ${schedule[0].start_time.slice(0,5)} 開始`:'今天尚未設定課表'}，目前有 {tasks.length} 件待辦需要留意。</p></div><button className="attendanceButton" onClick={()=>onPage('attendance')}>開始點名 <span>→</span></button></section>
     <div className="statGrid">{[['應到',students.length,'ink'],['出席',attended,'green'],['請假',excused,'amber'],['缺席',counts.absent,'red']].map(([l,v,t])=><article className={`statCard ${t}`} key={l}><span>{l}</span><strong>{v}</strong><small>人</small></article>)}</div>
     <div className="dashboardGrid"><section className="panel schedulePanel"><PanelHead eyebrow="TODAY" title="今日課表" action="完整課表" onClick={()=>onPage('schedule')}/><div className="lessonList">{schedule.length?schedule.slice(0,4).map((lesson,i)=><div className={`lesson ${i===0?'active':''}`} key={lesson.id}><time>{lesson.start_time.slice(0,5)}</time><span className="lessonIndex"/><div><strong>{lesson.subject}</strong><small>{lesson.location}</small></div>{i===0&&<em>下一節</em>}</div>):<Empty text="尚未設定今天的課表"/>}</div></section>
       <section className="panel taskPanel"><PanelHead eyebrow="ACTION" title="待辦提醒" action="全部待辦" onClick={()=>onPage('tasks')} tone="coral"/>{tasks.length?tasks.slice(0,3).map(t=><button className={`task ${t.due_at<new Date().toISOString().slice(0,16)?'urgent':''}`} key={t.id} onClick={()=>onEdit({table:'tasks',row:t as any})}><span className="check"/><div><strong>{t.title}</strong><small>{formatDateTime(t.due_at)}・{t.category}</small></div><b>{t.due_at.slice(0,10)<today()?'逾期':t.due_at.slice(0,10)===today()?'今天':'近期'}</b></button>):<Empty text="今天沒有待辦事項"/>}</section>
-      <section className="panel followPanel"><PanelHead eyebrow="FOLLOW UP" title="學生追蹤" action="查看紀錄" onClick={()=>onPage('records')} tone="blue"/>{records.length?records.slice(0,4).map((r,i)=><button className="studentRow" key={r.id} onClick={()=>onEdit({table:'student_records',row:r as any})}><span className={`studentAvatar ${i%2?'mint':'lavender'}`}>{dataNo(students,r.student_id)}</span><div><strong>{studentName(r.student_id)}</strong><small>{r.record_type}・{r.follow_up_date===today()?'今天':formatDate(r.follow_up_date||'')}</small></div><span className="arrow">→</span></button>):<Empty text="近期沒有需要追蹤的學生"/>}</section></div></>;
+      <section className="panel followPanel"><PanelHead eyebrow="FOLLOW UP" title="學生追蹤" action="查看紀錄" onClick={()=>onPage('records')} tone="blue"/>{records.length?records.slice(0,4).map((r,i)=><button className="studentRow" key={r.id} onClick={()=>onEdit({table:'student_records',row:r as any})}><span className={`studentAvatar ${i%2?'mint':'lavender'}`}>{dataNo(students,r.student_id)}</span><div><strong>{studentName(r.student_id)}</strong><small>{r.record_type}・{r.follow_up_date===today()?'今天':formatDate(r.follow_up_date||'')}</small></div><span className="arrow">→</span></button>):<Empty text="近期沒有需要追蹤的學生"/>}</section></div>
+    <HomeworkTracker students={students} subjects={homeworkSubjects} records={homeworkRecords} addRecord={addHomeworkRecord} removeRecord={removeHomeworkRecord} addSubject={addHomeworkSubject} removeSubject={removeHomeworkSubject}/></>;
+}
+
+function HomeworkTracker({students,subjects,records,addRecord,removeRecord,addSubject,removeSubject}:{students:Student[];subjects:HomeworkSubject[];records:HomeworkRecord[];addRecord:(subjectId:string,studentId:string)=>Promise<void>;removeRecord:(id:string)=>void;addSubject:(name:string)=>Promise<void>;removeSubject:(subject:HomeworkSubject)=>Promise<void>}){
+  const [selectedStudent,setSelectedStudent]=useState(''),[newSubject,setNewSubject]=useState('');
+  const sorted=[...subjects].sort((a,b)=>a.sort_order-b.sort_order||a.name.localeCompare(b.name));
+  const student=(id:string)=>students.find(s=>s.id===id);
+  async function assign(subjectId:string,studentId:string){if(!studentId)return;await addRecord(subjectId,studentId);setSelectedStudent('');}
+  async function submitSubject(e:FormEvent){e.preventDefault();const name=newSubject.trim();if(!name||subjects.some(s=>s.name===name))return;await addSubject(name);setNewSubject('');}
+  return <section className="homeworkPanel"><div className="homeworkHead"><div><span className="eyebrow">HOMEWORK</span><h2>今日欠功課</h2><p>把學生拖到科目右側登記；平板可先點學生，再點科目。</p></div><form className="subjectAdder" onSubmit={submitSubject}><input aria-label="新增科目名稱" value={newSubject} onChange={e=>setNewSubject(e.target.value)} placeholder="新增科目"/><button disabled={!newSubject.trim()}>＋ 加入</button></form></div>
+    <div className="studentTray" aria-label="學生名單">{students.map(s=><button key={s.id} draggable onDragStart={e=>e.dataTransfer.setData('text/plain',s.id)} onClick={()=>setSelectedStudent(selectedStudent===s.id?'':s.id)} className={selectedStudent===s.id?'selected':''}><b>{String(s.student_no).padStart(2,'0')}</b>{s.name}</button>)}</div>
+    <div className="homeworkSubjects">{sorted.map(subject=>{const owing=records.filter(r=>r.subject_id===subject.id);return <article key={subject.id} className="homeworkSubject" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();assign(subject.id,e.dataTransfer.getData('text/plain'))}} onClick={()=>selectedStudent&&assign(subject.id,selectedStudent)}><div className="subjectName"><strong>{subject.name}</strong><span>{owing.length} 人</span><button aria-label={`刪除${subject.name}`} onClick={e=>{e.stopPropagation();removeSubject(subject)}}>×</button></div><div className={`owingStudents ${!owing.length?'emptyOwing':''}`}>{owing.length?owing.map(record=>{const s=student(record.student_id);return <span key={record.id}><b>{s?String(s.student_no).padStart(2,'0'):'—'}</b>{s?.name||'已刪除學生'}<button aria-label={`移除${s?.name||'學生'}的${subject.name}紀錄`} onClick={e=>{e.stopPropagation();removeRecord(record.id)}}>×</button></span>}):<em>{selectedStudent?'點一下登記':'拖曳學生到這裡'}</em>}</div></article>})}{!sorted.length&&<Empty text="尚未設定科目，請在右上方新增。"/>}</div>
+  </section>;
 }
 function PanelHead({eyebrow,title,action,onClick,tone='' }:{eyebrow:string;title:string;action:string;onClick:()=>void;tone?:string}){return <div className="panelHead"><div><span className={`eyebrow ${tone}`}>{eyebrow}</span><h3>{title}</h3></div><button onClick={onClick}>{action}</button></div>}
 function Empty({text}:{text:string}){return <div className="empty">{text}</div>}

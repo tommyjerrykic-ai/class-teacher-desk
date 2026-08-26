@@ -5,12 +5,14 @@ export type Schedule = { id:string; user_id:string; weekday:number; period:numbe
 export type StudentRecord = { id:string; user_id:string; student_id:string; record_date:string; record_type:string; content:string; follow_up_date:string|null; created_at?:string };
 export type ClassSettings = { id:string; user_id:string; class_name:string; school_year:string; semester:string; teacher_name:string };
 export type SeatingPlan = { id:string; user_id:string; plan_date:string; layout:(string|null)[]; created_at?:string };
-export type AppData = { students:Student[]; attendance:Attendance[]; tasks:Task[]; schedule:Schedule[]; student_records:StudentRecord[]; class_settings:ClassSettings[]; seating_plans:SeatingPlan[] };
+export type HomeworkSubject = { id:string; user_id:string; name:string; sort_order:number; created_at?:string };
+export type HomeworkRecord = { id:string; user_id:string; subject_id:string; student_id:string; date:string; created_at?:string };
+export type AppData = { students:Student[]; attendance:Attendance[]; tasks:Task[]; schedule:Schedule[]; student_records:StudentRecord[]; class_settings:ClassSettings[]; seating_plans:SeatingPlan[]; homework_subjects:HomeworkSubject[]; homework_records:HomeworkRecord[] };
 export type Session = { access_token:string; refresh_token:string; expires_at?:number; user:{ id:string; email:string } };
 export type CloudConfig = { url:string; key:string };
 
-export const emptyData:AppData = { students:[], attendance:[], tasks:[], schedule:[], student_records:[], class_settings:[], seating_plans:[] };
-export const tableNames = ['students','attendance','tasks','schedule','student_records','class_settings','seating_plans'] as const;
+export const emptyData:AppData = { students:[], attendance:[], tasks:[], schedule:[], student_records:[], class_settings:[], seating_plans:[], homework_subjects:[], homework_records:[] };
+export const tableNames = ['students','attendance','tasks','schedule','student_records','class_settings','seating_plans','homework_subjects','homework_records'] as const;
 const uid = () => crypto.randomUUID();
 const isoDate = (offset=0) => { const d=new Date(); d.setDate(d.getDate()+offset); return d.toISOString().slice(0,10); };
 
@@ -21,6 +23,7 @@ export function demoData():AppData {
     [8,'陳語晴','陳女士','0918-205-733',['學習追蹤']], [12,'林品睿','林先生','0988-721-336',[]], [21,'郭宇辰','郭女士','0920-553-812',['家長聯絡']]
   ].map(([student_no,name,guardian_name,guardian_phone,tags])=>({id:uid(),user_id:user,student_no:student_no as number,name:name as string,guardian_name:guardian_name as string,guardian_phone:guardian_phone as string,tags:tags as string[],notes:'',archived:false}));
   const byNo=(n:number)=>students.find(s=>s.student_no===n)!.id;
+  const homeworkSubjects:HomeworkSubject[]=['中文','英文','數學','歷史','地理','綜合科學','資訊科技'].map((name,i)=>({id:uid(),user_id:user,name,sort_order:i+1}));
   return {
     students,
     attendance:students.map((s,i)=>({id:uid(),user_id:user,student_id:s.id,date:isoDate(),status:i===3?'sick':i===5?'late':'present',notes:''})),
@@ -36,7 +39,9 @@ export function demoData():AppData {
       {id:uid(),user_id:user,student_id:byNo(8),record_date:isoDate(-5),record_type:'學習狀況',content:'近期作業完成度下降，已約定本週再次了解。',follow_up_date:isoDate()},
       {id:uid(),user_id:user,student_id:byNo(21),record_date:isoDate(-2),record_type:'家長聯絡',content:'已和家長討論到校狀況，明日回訪。',follow_up_date:isoDate(1)}],
     class_settings:[{id:uid(),user_id:user,class_name:'七年三班',school_year:'115 學年度',semester:'第一學期',teacher_name:'林老師'}],
-    seating_plans:[]
+    seating_plans:[],
+    homework_subjects:homeworkSubjects,
+    homework_records:[]
   };
 }
 
@@ -79,7 +84,7 @@ export function sessionFromHash():Session|null {
 
 export async function loadCloud(config:CloudConfig,session:Session):Promise<AppData> {
   const entries=await Promise.all(tableNames.map(async table=>{
-    const order=table==='students'?'student_no.asc':table==='schedule'?'weekday.asc,period.asc':table==='tasks'?'due_at.asc':table==='student_records'?'record_date.desc':table==='attendance'?'date.desc':table==='seating_plans'?'created_at.desc':'';
+    const order=table==='students'?'student_no.asc':table==='schedule'?'weekday.asc,period.asc':table==='tasks'?'due_at.asc':table==='student_records'?'record_date.desc':table==='attendance'?'date.desc':table==='seating_plans'?'created_at.desc':table==='homework_subjects'?'sort_order.asc':table==='homework_records'?'date.desc':'';
     const query=`select=*${order?`&order=${order}`:''}`;
     const r=await fetch(`${config.url}/rest/v1/${table}?${query}`,{headers:authHeaders(config,session.access_token,false)}); return [table,await parseResponse(r)];
   }));
@@ -105,5 +110,5 @@ export async function cloudReplace(config:CloudConfig,session:Session,data:AppDa
   for(const table of tableNames) if(data[table].length) { const rows=data[table].map(row=>({...row,user_id:session.user.id})); const r=await fetch(`${config.url}/rest/v1/${table}`,{method:'POST',headers:authHeaders(config,session.access_token),body:JSON.stringify(rows)}); await parseResponse(r); }
 }
 
-export function loadLocal():AppData { try { const raw=localStorage.getItem('teacher-desk-demo'); if(raw) return JSON.parse(raw); } catch {} const data=demoData(); saveLocal(data); return data; }
+export function loadLocal():AppData { try { const raw=localStorage.getItem('teacher-desk-demo'); if(raw) { const saved=JSON.parse(raw); return {...emptyData,...saved,homework_subjects:Array.isArray(saved.homework_subjects)?saved.homework_subjects:demoData().homework_subjects,homework_records:Array.isArray(saved.homework_records)?saved.homework_records:[]}; } } catch {} const data=demoData(); saveLocal(data); return data; }
 export function saveLocal(data:AppData) { localStorage.setItem('teacher-desk-demo',JSON.stringify(data)); }
