@@ -1,16 +1,17 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import ClassRolesPage from './class-roles';
 import {
-  AppData, Attendance, ClassSettings, CloudConfig, HomeworkRecord, HomeworkSubject, Schedule, SeatingPlan, Session, Student, StudentRecord, Task,
+  AppData, Attendance, ClassRole, ClassSettings, CloudConfig, HomeworkRecord, HomeworkSubject, Schedule, SeatingPlan, Session, Student, StudentRecord, Task,
   cloudDelete, cloudInsert, cloudReplace, cloudReplaceRows, cloudUpdate, emptyData, loadCloud, loadLocal, resetPassword,
   saveLocal, sessionFromHash, signIn, signUp, tableNames, updatePassword,
 } from './data';
 
-type Page='dashboard'|'attendance'|'tasks'|'students'|'seating'|'records'|'schedule'|'settings';
+type Page='dashboard'|'attendance'|'tasks'|'students'|'seating'|'officers'|'records'|'schedule'|'settings';
 type EditState={table:keyof AppData; row:Record<string,unknown>}|null;
-const labels:Record<Page,string>={dashboard:'今日總覽',attendance:'出缺勤',tasks:'待辦事項',students:'學生名冊',seating:'座位表',records:'個案紀錄',schedule:'課表設定',settings:'設定與資料'};
-const icons:Record<Page,string>={dashboard:'今',attendance:'勤',tasks:'辦',students:'生',seating:'位',records:'記',schedule:'課',settings:'設'};
+const labels:Record<Page,string>={dashboard:'今日總覽',attendance:'出缺勤',tasks:'待辦事項',students:'學生名冊',seating:'座位表',officers:'班幹事',records:'個案紀錄',schedule:'課表設定',settings:'設定與資料'};
+const icons:Record<Page,string>={dashboard:'今',attendance:'勤',tasks:'辦',students:'生',seating:'位',officers:'幹',records:'記',schedule:'課',settings:'設'};
 const statusLabels:Record<Attendance['status'],string>={present:'出席',late:'遲到',personal:'事假',sick:'病假',absent:'缺席'};
 const weekdays=['一','二','三','四','五','六','日'];
 const defaultCloudConfig:CloudConfig={
@@ -66,6 +67,14 @@ export default function Home(){
     if(!confirm(`確定刪除「${subject.name}」嗎？該科目的欠功課紀錄也會一併刪除。`))return;
     setBusy(true);try{if(!demo){const related=data.homework_records.filter(r=>r.subject_id===subject.id);await Promise.all(related.map(r=>cloudDelete(config!,session!,'homework_records',r.id)));await cloudDelete(config!,session!,'homework_subjects',subject.id);}setData(prev=>{const next={...prev,homework_subjects:prev.homework_subjects.filter(s=>s.id!==subject.id),homework_records:prev.homework_records.filter(r=>r.subject_id!==subject.id)};if(demo)saveLocal(next);return next;});setToast('科目已刪除');}catch(e){setToast((e as Error).message);}finally{setBusy(false);}
   }
+  async function addClassRoleMember(roleId:string,studentId:string){
+    if(data.class_role_members.some(member=>member.role_id===roleId&&member.student_id===studentId)){setToast('這位學生已在該崗位');return;}
+    await mutate('class_role_members',{role_id:roleId,student_id:studentId});
+  }
+  async function removeClassRole(role:ClassRole){
+    if(!confirm(`確定刪除「${role.name}」崗位嗎？`))return;
+    setBusy(true);try{if(!demo){const related=data.class_role_members.filter(member=>member.role_id===role.id);await Promise.all(related.map(member=>cloudDelete(config!,session!,'class_role_members',member.id)));await cloudDelete(config!,session!,'class_roles',role.id);}setData(prev=>{const next={...prev,class_roles:prev.class_roles.filter(item=>item.id!==role.id),class_role_members:prev.class_role_members.filter(member=>member.role_id!==role.id)};if(demo)saveLocal(next);return next;});setToast('崗位已刪除');}catch(e){setToast((e as Error).message);}finally{setBusy(false);}
+  }
   async function reorderHomeworkSubjects(ids:string[]){
     const order=new Map(ids.map((id,index)=>[id,index+1]));
     const changed=data.homework_subjects.filter(subject=>order.has(subject.id)&&subject.sort_order!==order.get(subject.id));
@@ -99,6 +108,7 @@ export default function Home(){
         {page==='tasks'&&<TasksPage {...pageProps} tasks={data.tasks} toggle={t=>mutate('tasks',t,{completed:!t.completed})}/>} 
         {page==='students'&&<StudentsPage {...pageProps}/>} 
         {page==='seating'&&<SeatingPage students={students} plans={data.seating_plans} settings={settings} save={layout=>mutate('seating_plans',{plan_date:today(),created_at:new Date().toISOString(),layout})}/>} 
+        {page==='officers'&&<ClassRolesPage students={students} roles={data.class_roles} members={data.class_role_members} addRole={name=>mutate('class_roles',{name,sort_order:(Math.max(0,...data.class_roles.map(role=>role.sort_order))+1)})} removeRole={removeClassRole} addMember={addClassRoleMember} removeMember={id=>remove('class_role_members',id)}/>}
         {page==='records'&&<RecordsPage {...pageProps} records={data.student_records}/>} 
         {page==='schedule'&&<SchedulePage schedule={data.schedule} save={saveSchedule}/>} 
         {page==='settings'&&<SettingsPage settings={settings} demo={demo} email={session?.user.email||''} save={row=>mutate('class_settings',row)} exportJson={()=>download(`班主任工作台-${today()}.json`,JSON.stringify(data,null,2))} exportCsv={()=>exportCsv(data)} importClick={()=>importRef.current?.click()} changePassword={async password=>{if(!config||!session)return;await updatePassword(config,session.access_token,password);setToast('密碼已更新');}} logout={logout}/>} 

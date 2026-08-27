@@ -7,12 +7,14 @@ export type ClassSettings = { id:string; user_id:string; class_name:string; scho
 export type SeatingPlan = { id:string; user_id:string; plan_date:string; layout:(string|null)[]; created_at?:string };
 export type HomeworkSubject = { id:string; user_id:string; name:string; sort_order:number; created_at?:string };
 export type HomeworkRecord = { id:string; user_id:string; subject_id:string; student_id:string; date:string; created_at?:string };
-export type AppData = { students:Student[]; attendance:Attendance[]; tasks:Task[]; schedule:Schedule[]; student_records:StudentRecord[]; class_settings:ClassSettings[]; seating_plans:SeatingPlan[]; homework_subjects:HomeworkSubject[]; homework_records:HomeworkRecord[] };
+export type ClassRole = { id:string; user_id:string; name:string; sort_order:number; created_at?:string };
+export type ClassRoleMember = { id:string; user_id:string; role_id:string; student_id:string; created_at?:string };
+export type AppData = { students:Student[]; attendance:Attendance[]; tasks:Task[]; schedule:Schedule[]; student_records:StudentRecord[]; class_settings:ClassSettings[]; seating_plans:SeatingPlan[]; homework_subjects:HomeworkSubject[]; homework_records:HomeworkRecord[]; class_roles:ClassRole[]; class_role_members:ClassRoleMember[] };
 export type Session = { access_token:string; refresh_token:string; expires_at?:number; user:{ id:string; email:string } };
 export type CloudConfig = { url:string; key:string };
 
-export const emptyData:AppData = { students:[], attendance:[], tasks:[], schedule:[], student_records:[], class_settings:[], seating_plans:[], homework_subjects:[], homework_records:[] };
-export const tableNames = ['students','attendance','tasks','schedule','student_records','class_settings','seating_plans','homework_subjects','homework_records'] as const;
+export const emptyData:AppData = { students:[], attendance:[], tasks:[], schedule:[], student_records:[], class_settings:[], seating_plans:[], homework_subjects:[], homework_records:[], class_roles:[], class_role_members:[] };
+export const tableNames = ['students','attendance','tasks','schedule','student_records','class_settings','seating_plans','homework_subjects','homework_records','class_roles','class_role_members'] as const;
 const uid = () => crypto.randomUUID();
 const isoDate = (offset=0) => { const d=new Date(); d.setDate(d.getDate()+offset); return d.toISOString().slice(0,10); };
 
@@ -24,6 +26,7 @@ export function demoData():AppData {
   ].map(([student_no,name,guardian_name,guardian_phone,tags])=>({id:uid(),user_id:user,student_no:student_no as number,name:name as string,guardian_name:guardian_name as string,guardian_phone:guardian_phone as string,tags:tags as string[],notes:'',archived:false}));
   const byNo=(n:number)=>students.find(s=>s.student_no===n)!.id;
   const homeworkSubjects:HomeworkSubject[]=['中文','英文','數學','歷史','地理','綜合科學','資訊科技'].map((name,i)=>({id:uid(),user_id:user,name,sort_order:i+1}));
+  const classRoles:ClassRole[]=['中文','數學','英文','地理','歷史','綜合科學','公民','音樂','體育','清紀','壁報','電器'].map((name,i)=>({id:uid(),user_id:user,name,sort_order:i+1}));
   return {
     students,
     attendance:students.map((s,i)=>({id:uid(),user_id:user,student_id:s.id,date:isoDate(),status:i===3?'sick':i===5?'late':'present',notes:''})),
@@ -41,7 +44,9 @@ export function demoData():AppData {
     class_settings:[{id:uid(),user_id:user,class_name:'七年三班',school_year:'115 學年度',semester:'第一學期',teacher_name:'林老師'}],
     seating_plans:[],
     homework_subjects:homeworkSubjects,
-    homework_records:[]
+    homework_records:[],
+    class_roles:classRoles,
+    class_role_members:[]
   };
 }
 
@@ -84,7 +89,7 @@ export function sessionFromHash():Session|null {
 
 export async function loadCloud(config:CloudConfig,session:Session):Promise<AppData> {
   const entries=await Promise.all(tableNames.map(async table=>{
-    const order=table==='students'?'student_no.asc':table==='schedule'?'weekday.asc,period.asc':table==='tasks'?'due_at.asc':table==='student_records'?'record_date.desc':table==='attendance'?'date.desc':table==='seating_plans'?'created_at.desc':table==='homework_subjects'?'sort_order.asc':table==='homework_records'?'date.desc':'';
+    const order=table==='students'?'student_no.asc':table==='schedule'?'weekday.asc,period.asc':table==='tasks'?'due_at.asc':table==='student_records'?'record_date.desc':table==='attendance'?'date.desc':table==='seating_plans'?'created_at.desc':table==='homework_subjects'||table==='class_roles'?'sort_order.asc':table==='homework_records'?'date.desc':'';
     const query=`select=*${order?`&order=${order}`:''}`;
     const r=await fetch(`${config.url}/rest/v1/${table}?${query}`,{headers:authHeaders(config,session.access_token,false)}); return [table,await parseResponse(r)];
   }));
@@ -110,5 +115,5 @@ export async function cloudReplace(config:CloudConfig,session:Session,data:AppDa
   for(const table of tableNames) if(data[table].length) { const rows=data[table].map(row=>({...row,user_id:session.user.id})); const r=await fetch(`${config.url}/rest/v1/${table}`,{method:'POST',headers:authHeaders(config,session.access_token),body:JSON.stringify(rows)}); await parseResponse(r); }
 }
 
-export function loadLocal():AppData { try { const raw=localStorage.getItem('teacher-desk-demo'); if(raw) { const saved=JSON.parse(raw); return {...emptyData,...saved,homework_subjects:Array.isArray(saved.homework_subjects)?saved.homework_subjects:demoData().homework_subjects,homework_records:Array.isArray(saved.homework_records)?saved.homework_records:[]}; } } catch {} const data=demoData(); saveLocal(data); return data; }
+export function loadLocal():AppData { try { const raw=localStorage.getItem('teacher-desk-demo'); if(raw) { const saved=JSON.parse(raw),defaults=demoData(); return {...emptyData,...saved,homework_subjects:Array.isArray(saved.homework_subjects)?saved.homework_subjects:defaults.homework_subjects,homework_records:Array.isArray(saved.homework_records)?saved.homework_records:[],class_roles:Array.isArray(saved.class_roles)?saved.class_roles:defaults.class_roles,class_role_members:Array.isArray(saved.class_role_members)?saved.class_role_members:[]}; } } catch {} const data=demoData(); saveLocal(data); return data; }
 export function saveLocal(data:AppData) { localStorage.setItem('teacher-desk-demo',JSON.stringify(data)); }

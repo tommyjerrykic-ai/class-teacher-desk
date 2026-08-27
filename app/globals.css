@@ -68,6 +68,25 @@ button { font:inherit; }
 .owingStudents>span { display:flex;align-items:center;gap:5px;max-width:100%;border-radius:99px;background:#f7ded5;color:#7c3e30;padding:6px 7px 6px 9px;font-size:11px }
 .owingStudents>span b { font:11px Georgia,serif }.owingStudents>span>button { width:20px;height:20px;border:0;border-radius:50%;background:rgba(255,255,255,.65);color:#9c5543;cursor:pointer }
 .owingStudents>em { color:#a2aaa5;font-size:11px;font-style:normal }
+.roleAdder { display:flex;justify-self:end;gap:8px;width:min(430px,100%) }
+.roleAdder input { min-width:0 }
+.roleAdder button:disabled { opacity:.45;cursor:not-allowed }
+.roleGrid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px }
+.roleCard { min-width:0;display:grid;align-content:start;gap:13px;padding:18px;border:1px solid var(--line);border-radius:15px;background:white }
+.roleCard>header { display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid #edf0ec }
+.roleCard>header>div { display:flex;align-items:baseline;gap:9px }
+.roleCard h3 { margin:0;font:20px Georgia,'Noto Serif TC',serif }
+.roleCard header span { color:#849089;font-size:10px }
+.roleCard header button { border:0;background:transparent;padding:6px;cursor:pointer;font-size:10px }
+.roleAssign { display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px }
+.roleAssign button { border:1px solid var(--ink);border-radius:9px;background:var(--ink);color:white;padding:0 14px;font-size:11px;font-weight:800;cursor:pointer }
+.roleAssign button:disabled { opacity:.4;cursor:not-allowed }
+.roleMembers { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px }
+.roleMembers>div { min-width:0;display:grid;grid-template-columns:34px minmax(0,1fr) 25px;align-items:center;gap:8px;padding:8px;border-radius:11px;background:#f5f7f4 }
+.roleMembers .studentAvatar { width:34px;height:34px;border-radius:10px;font-size:10px }
+.roleMembers strong { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px }
+.roleMembers button { width:25px;height:25px;border:0;border-radius:50%;background:white;color:#986052;cursor:pointer }
+.roleMembers p { grid-column:1/-1;margin:4px 0;color:#9aa39e;font-size:11px;text-align:center }
 .mobileNav { display:none; }
 @media (max-width:900px) { .shell { display:block; padding-bottom:74px; }.sidebar { display:none; }.sidebarToggle{display:none}.workspace { width:100%; }.topbar { height:82px; padding:0 22px; }.topActions .syncDot,.topActions .ghostButton { display:none; }.content { padding:20px 22px 32px; }.mobileNav { position:fixed; z-index:10; inset:auto 0 0; height:66px; display:grid; grid-template-columns:repeat(5,1fr); border-top:1px solid var(--line); background:rgba(255,255,255,.96); backdrop-filter:blur(12px); }.mobileNav button { border:0; background:none; color:#78827d; font-size:12px; }.mobileNav button.active { color:var(--green); font-weight:800; }.dashboardGrid { grid-template-columns:1fr; }.followPanel { grid-column:auto; }.followPanel { grid-template-columns:1fr; }.followPanel .panelHead { grid-column:auto; }.heroCard { min-height:142px; } }
 @media (max-width:620px) { .topbar h1 { font-size:20px; }.topbar p { font-size:11px; }.primaryButton { width:42px; height:42px; overflow:hidden; white-space:nowrap; padding:0 12px; font-size:0; }.primaryButton::first-letter { font-size:20px; }.content { padding:15px 14px 28px; }.heroCard { align-items:flex-start; padding:22px; }.heroCard p { max-width:80%; line-height:1.5; }.attendanceButton { position:absolute; right:18px; bottom:18px; padding:11px 14px; }.attendanceButton span { margin-left:7px; }.statGrid { grid-template-columns:repeat(2,1fr); }.panel { padding:18px; } }
@@ -178,14 +197,17 @@ label { display:grid; gap:7px; color:#53615b; font-size:12px; font-weight:700; }
 
 @media (max-width:1150px) { .studentGrid { grid-template-columns:repeat(2,minmax(0,1fr)) } }
 @media (max-width:900px) {
-  .mobileNav { grid-template-columns:repeat(8,minmax(72px,1fr));overflow-x:auto;overflow-y:hidden }
+  .mobileNav { grid-template-columns:repeat(9,minmax(72px,1fr));overflow-x:auto;overflow-y:hidden }
   .mobileNav button { min-width:72px }
   .studentGrid { grid-template-columns:repeat(2,minmax(0,1fr)) }
+  .roleGrid { grid-template-columns:1fr }
 }
 @media (max-width:650px) {
   .studentGrid { grid-template-columns:1fr }
   .recordsTools { width:100%;display:grid;grid-template-columns:1fr 1fr }
   .recordsTools input { grid-column:1/-1 }
+  .roleAdder { width:100% }
+  .roleMembers { grid-template-columns:1fr }
   .classroomMap { grid-template-columns:42px minmax(0,1fr) 34px;gap:8px }
   .seatingGrid { min-width:650px;gap:7px }
   .seat { min-height:70px }
