@@ -48,10 +48,28 @@ create table if not exists public.homework_records (
   date date not null default current_date, created_at timestamptz not null default now(),
   unique(user_id, subject_id, student_id, date)
 );
+create table if not exists public.class_roles (
+  id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null, sort_order integer not null default 0, created_at timestamptz not null default now(),
+  unique(user_id, name)
+);
+create table if not exists public.class_role_members (
+  id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade,
+  role_id uuid not null references public.class_roles(id) on delete cascade,
+  student_id uuid not null references public.students(id) on delete cascade,
+  created_at timestamptz not null default now(), unique(user_id, role_id, student_id)
+);
 
 insert into public.homework_subjects (user_id,name,sort_order)
 select u.id,v.name,v.sort_order from auth.users u cross join (values
   ('中文',1),('英文',2),('數學',3),('歷史',4),('地理',5),('綜合科學',6),('資訊科技',7)
+) as v(name,sort_order)
+on conflict (user_id,name) do nothing;
+
+insert into public.class_roles (user_id,name,sort_order)
+select u.id,v.name,v.sort_order from auth.users u cross join (values
+  ('中文',1),('數學',2),('英文',3),('地理',4),('歷史',5),('綜合科學',6),
+  ('公民',7),('音樂',8),('體育',9),('清紀',10),('壁報',11),('電器',12)
 ) as v(name,sort_order)
 on conflict (user_id,name) do nothing;
 
@@ -62,6 +80,8 @@ create index if not exists idx_schedule_user_weekday on public.schedule(user_id,
 create index if not exists idx_seating_user_created on public.seating_plans(user_id,created_at desc);
 create index if not exists idx_homework_subjects_user_order on public.homework_subjects(user_id,sort_order);
 create index if not exists idx_homework_records_user_date on public.homework_records(user_id,date);
+create index if not exists idx_class_roles_user_order on public.class_roles(user_id,sort_order);
+create index if not exists idx_class_role_members_user_role on public.class_role_members(user_id,role_id);
 
 alter table public.students enable row level security;
 alter table public.attendance enable row level security;
@@ -72,6 +92,8 @@ alter table public.class_settings enable row level security;
 alter table public.seating_plans enable row level security;
 alter table public.homework_subjects enable row level security;
 alter table public.homework_records enable row level security;
+alter table public.class_roles enable row level security;
+alter table public.class_role_members enable row level security;
 
 grant usage on schema public to authenticated;
 grant select, insert, update, delete on table
@@ -83,7 +105,9 @@ grant select, insert, update, delete on table
   public.class_settings,
   public.seating_plans,
   public.homework_subjects,
-  public.homework_records
+  public.homework_records,
+  public.class_roles,
+  public.class_role_members
 to authenticated;
 
 revoke all on table
@@ -95,11 +119,13 @@ revoke all on table
   public.class_settings,
   public.seating_plans,
   public.homework_subjects,
-  public.homework_records
+  public.homework_records,
+  public.class_roles,
+  public.class_role_members
 from anon;
 
 do $$ declare t text; begin
-  foreach t in array array['students','attendance','tasks','schedule','student_records','class_settings','seating_plans','homework_subjects','homework_records'] loop
+  foreach t in array array['students','attendance','tasks','schedule','student_records','class_settings','seating_plans','homework_subjects','homework_records','class_roles','class_role_members'] loop
     execute format('drop policy if exists owner_select on public.%I',t); execute format('create policy owner_select on public.%I for select to authenticated using ((select auth.uid()) = user_id)',t);
     execute format('drop policy if exists owner_insert on public.%I',t); execute format('create policy owner_insert on public.%I for insert to authenticated with check ((select auth.uid()) = user_id)',t);
     execute format('drop policy if exists owner_update on public.%I',t); execute format('create policy owner_update on public.%I for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id)',t);
