@@ -57,13 +57,13 @@ export default function ClassRolesPage({students,roles,members,addRole,removeRol
   return <section className="pageSection">
     <div className="sectionTitle"><div><span className="eyebrow">CLASS OFFICERS</span><h2>班幹事</h2><p>每個崗位可安排多名學生，同一名學生亦可擔任不同崗位。</p></div><div className="sectionActions"><button onClick={exportCsv}>匯出名單</button></div></div>
     <form className="roleAdder" onSubmit={submitRole}><input aria-label="新增崗位名稱" value={newRole} onChange={e=>setNewRole(e.target.value)} placeholder="新增崗位"/><button className="primaryButton" disabled={!newRole.trim()}>＋ 新增崗位</button></form>
-    <div className="roleGrid">{sorted.map(role=>{
+    <div className="homeworkSubjects">{sorted.map(role=>{
       const assigned=members.filter(member=>member.role_id===role.id);
       const available=students.filter(item=>!assigned.some(member=>member.student_id===item.id));
-      return <article className="roleCard" key={role.id}>
-        <header><div><h3>{role.name}</h3><span>{assigned.length} 人</span></div><button className="danger" aria-label={`刪除${role.name}崗位`} onClick={()=>removeRole(role)}>刪除崗位</button></header>
-        <div className="roleAssign"><select aria-label={`選擇${role.name}幹事`} value={selected[role.id]||''} onChange={e=>setSelected(prev=>({...prev,[role.id]:e.target.value}))}><option value="">選擇學生…</option>{available.map(item=><option key={item.id} value={item.id}>{String(item.student_no).padStart(2,'0')}　{item.name}</option>)}</select><button type="button" disabled={!selected[role.id]} onClick={()=>assign(role.id)}>加入</button></div>
-        <div className="roleMembers">{assigned.length?assigned.map(member=>{const item=student(member.student_id);return <div key={member.id}><span className="studentAvatar mint">{item?String(item.student_no).padStart(2,'0'):'—'}</span><strong>{item?.name||'已刪除學生'}</strong><button aria-label={`移除${item?.name||'學生'}的${role.name}職務`} onClick={()=>removeMember(member.id)}>×</button></div>}):<p>尚未安排學生</p>}</div>
+      return <article className="homeworkSubject" key={role.id}>
+        <div className="subjectName"><i aria-hidden="true">•</i><strong>{role.name}</strong><span>{assigned.length} 人</span><button aria-label={`刪除${role.name}崗位`} onClick={()=>removeRole(role)}>×</button></div>
+        <div className="subjectAssign"><select aria-label={`選擇${role.name}幹事`} value={selected[role.id]||''} onChange={e=>setSelected(prev=>({...prev,[role.id]:e.target.value}))}><option value="">選擇學生…</option>{available.map(item=><option key={item.id} value={item.id}>{String(item.student_no).padStart(2,'0')}　{item.name}</option>)}</select><button type="button" disabled={!selected[role.id]} onClick={()=>assign(role.id)}>加入</button></div>
+        <div className={`owingStudents ${!assigned.length?'emptyOwing':''}`}>{assigned.length?assigned.map(member=>{const item=student(member.student_id);return <span key={member.id}><b>{item?String(item.student_no).padStart(2,'0'):'—'}</b>{item?.name||'已刪除學生'}<button aria-label={`移除${item?.name||'學生'}的${role.name}職務`} onClick={()=>removeMember(member.id)}>×</button></span>}):<em>尚未安排學生</em>}</div>
       </article>;
     })}{!sorted.length&&<div className="empty">尚未設定崗位，請先新增。</div>}</div>
   </section>;
