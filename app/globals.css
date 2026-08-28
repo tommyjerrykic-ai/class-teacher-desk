@@ -164,6 +164,8 @@ label { display:grid; gap:7px; color:#53615b; font-size:12px; font-weight:700; }
 .studentCardMain .tags { margin-top:5px;gap:4px }
 .studentCardMain .tags span { padding:3px 6px;font-size:8px }
 .studentCard>button { padding:5px }
+.studentCardActions { align-items:center;white-space:nowrap }
+.studentCardActions button { padding:5px }
 
 .savedStamp { margin:0;color:var(--muted);font-size:11px }
 .classroomMap { display:grid;grid-template-columns:54px minmax(0,1fr) 42px;grid-template-rows:1fr 1fr auto;gap:10px 12px;align-items:stretch }
