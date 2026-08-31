@@ -189,6 +189,8 @@ label { display:grid; gap:7px; color:#53615b; font-size:12px; font-weight:700; }
 .seat.occupied:active { cursor:grabbing }
 .seat.emptySeat { background:#f1f3ef;color:#a5ada8;border-style:dashed }
 .seat.picked { outline:3px solid rgba(233,111,81,.32);border-color:var(--coral);background:#fff8f5 }
+.seatSelectModal { width:min(420px,100%) }
+.seatSelectHint { margin:0;color:var(--muted);font-size:11px;line-height:1.6 }
 
 .scheduleTableWrap { overflow:auto;border:1px solid var(--line);border-radius:15px;background:white }
 .scheduleTable { width:100%;min-width:720px;border-collapse:separate;border-spacing:0;table-layout:fixed }
